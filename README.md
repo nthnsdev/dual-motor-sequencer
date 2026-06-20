@@ -23,6 +23,16 @@ A tutorial project that rotates two DC motors through a fixed CW/CCW sequence wh
 
 **Play order:** 1 → 2 → 3 → 4 → 3 → 2 → 1
 
+### ⚠️ Motor direction is not guaranteed by wiring alone
+
+CW/CCW in the code and on the LCD mean **clockwise/counter-clockwise as viewed from above, looking down at the wheel** (both motors are mounted shaft-up, so this reference works for either one). In the sketch, "CW" is really just `IN1=HIGH, IN2=LOW` — whether that physically spins the wheel clockwise depends on which of the motor's two wires you connected to OUT1 vs OUT2 (same idea for Motor 2 / OUT3 / OUT4). There's no universal "correct" way to wire a DC motor's two leads, so this has to be checked after wiring, not assumed from a table.
+
+**Calibration steps:**
+1. Wire both motors to the L298N however is convenient
+2. Upload the sketch and watch the first sequence step (both motors should turn the same way — Step 1 is CW/CW)
+3. If a motor spins the wrong direction relative to the other, swap that motor's two wires at the L298N OUT terminal — no code changes needed
+4. Re-run and confirm both motors now agree with what the LCD displays
+
 ## 🧰 Components
 
 | # | Component | Qty |
@@ -112,23 +122,60 @@ A tutorial project that rotates two DC motors through a fixed CW/CCW sequence wh
 |---------|-------------|
 | 2x 18650 (in series, 7.4V) | L298N 12V input terminal |
 
-> If the LCD stays blank or shows garbled text, try I2C address `0x3F` instead of `0x27` (change `LCD_ADDR` in the sketch). If a motor spins the wrong way, swap its two wires at the L298N terminal instead of editing code.
+See the **Troubleshooting** section near the bottom for common issues like a blank LCD or a motor spinning the wrong way.
 
 ## 📂 Choose your version
 
-- [`sketches/arduino/`](sketches/arduino/) — for Arduino Uno/Nano/Mega
+- [`sketches/arduino/`](sketches/arduino/) — for Arduino Uno (Nano shares the same I2C pins and should also work; **Mega does not** — its I2C pins are 20 (SDA) / 21 (SCL), not A4/A5, so the wiring table above doesn't apply to it)
 - [`sketches/esp32/`](sketches/esp32/) — for ESP32 DevKit boards
-
-Each sketch also repeats its wiring table in the header comment, so it's handy while you're wiring at the bench.
 
 ## 🚀 Getting Started
 
-1. Pick your board and open the matching `.ino` file
+### Arduino Uno
+
+1. Open `sketches/arduino/arduino_motor_sequencer.ino` in Arduino IDE
 2. Install the **LiquidCrystal I2C** library (by Frank de Brabander) via Library Manager
 3. Wire components per the comments at the top of the sketch
 4. Edit `PROJECT_NAME`, `MOTOR_SPEED`, and `STEP_DELAY_MS` to taste
-5. Upload and power on
+5. Select **Tools → Board → Arduino Uno**, pick the right port, and upload
+
+### ESP32
+
+1. In Arduino IDE, go to **File → Preferences** and paste this into "Additional Boards Manager URLs":
+   `https://espressif.github.io/arduino-esp32/package_esp32_index.json`
+2. Go to **Tools → Board → Boards Manager**, search "esp32", and install **esp32 by Espressif Systems**
+   *(On recent Arduino IDE 2.x versions it may already appear in Boards Manager without needing the URL above — add the URL only if you don't see it.)*
+3. Go to **Tools → Board** and select **ESP32 Dev Module**
+4. If your board doesn't appear under **Tools → Port**, install the CP2102 or CH340 USB driver (check which chip is on your board)
+5. Open `sketches/esp32/esp32_motor_sequencer.ino`
+6. Install the **LiquidCrystal I2C** library (by Frank de Brabander) via Library Manager
+7. Wire components per the comments at the top of the sketch
+8. Edit `PROJECT_NAME`, `MOTOR_SPEED`, and `STEP_DELAY_MS` to taste
+9. Upload — if it gets stuck on a string of dots ("Connecting....."), hold the **BOOT** button on the board until the upload starts
+
+## 🔋 Battery Safety
+
+This project uses 2x 18650 Li-ion cells in series — a few precautions worth following:
+
+- Prefer **protected** 18650 cells (they have built-in over-discharge and short-circuit protection)
+- Never let the bare terminals touch metal (tools, screws, the Sintra board's mounting hardware) — this can short the cells
+- Double-check polarity before connecting to the L298N's 12V terminal; reversed polarity can damage the driver instantly
+- Avoid discharging below ~3.0V per cell
+- Charge only with a charger rated for Li-ion 18650 cells — never a generic or non-Li-ion charger
+
+## 🛠 Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| LCD backlight on but no text | Wrong I2C address | Try `0x3F` instead of `0x27` in `LCD_ADDR` |
+| LCD shows garbled/random characters | Loose SDA/SCL wiring | Recheck I2C wiring and connections |
+| Motor spins the wrong direction | Motor leads "reversed" | Swap that motor's two wires at the L298N output terminal |
+| One or both motors don't spin | No motor power or bad common ground | Confirm battery is wired to the L298N's 12V terminal and all grounds are tied together |
+| ESP32 upload stuck on "Connecting....." | Board not entering flash mode | Hold the **BOOT** button while the upload starts |
+| "esp32" not found in Boards Manager | Missing boards manager URL | Add `https://espressif.github.io/arduino-esp32/package_esp32_index.json` under Additional Boards Manager URLs |
+| ESP32 missing from Tools → Port | Missing USB driver | Install the CP2102 or CH340 driver matching your board |
+| `LiquidCrystal_I2C.h` not found | Library not installed | Install "LiquidCrystal I2C" by Frank de Brabander via Library Manager |
 
 ## 📜 License
 
-MIT
+MIT — see [LICENSE](LICENSE)
