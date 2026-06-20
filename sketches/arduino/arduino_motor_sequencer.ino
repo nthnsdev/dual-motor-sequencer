@@ -1,72 +1,17 @@
-/*
-  Dual Motor Sequential Rotation Controller — ARDUINO VERSION
-  -------------------------------------------------------------
-  Boot sequence:
-    1. LCD turns on
-    2. Project name slides in from the left and exits off the right
-    3. Screen blinks for 3 seconds
-    4. "READY" is displayed
-    5. 1 second delay
-    6. Motor sequence runs: 1 -> 2 -> 3 -> 4 -> 3 -> 2 -> 1
-    7. "FINISH" is displayed, motors stop
-
-  Hardware:
-    - Arduino Uno (or compatible)
-    - L298N motor driver
-    - 2x Geared DC motor 130, dual shaft, 6V
-    - 20x4 I2C LCD
-    - 2x 18650 3.7V battery (motor power -> L298N's 12V input,
-      NOT through the Arduino's 5V pin)
-
-  Library required (Library Manager):
-    "LiquidCrystal I2C" by Frank de Brabander
-
-  Wiring (default pins below — change the #defines if yours differ):
-
-    L298N -> Arduino
-      ENA -> D9   (PWM, Motor 1 speed)
-      IN1 -> D8
-      IN2 -> D7
-      ENB -> D10  (PWM, Motor 2 speed)
-      IN3 -> D6
-      IN4 -> D5
-
-    LCD I2C -> Arduino
-      SDA -> A4
-      SCL -> A5
-      VCC -> 5V
-      GND -> GND
-
-    Power:
-      2x 18650 in series (7.4V) -> L298N "12V" input terminal
-      L298N 5V OUT -> Arduino 5V pin (only if the L298N's onboard
-        5V regulator jumper is in place — remove the jumper and
-        power the Arduino separately if your motors draw a lot of current)
-      Battery GND, L298N GND, and Arduino GND must all be tied together
-
-  Notes:
-    - If the LCD shows nothing or garbled characters, your I2C address
-      might be 0x3F instead of 0x27 — change LCD_ADDR below.
-    - If a motor spins the "wrong" way, swap that motor's two wires
-      at the L298N terminal instead of editing code.
-*/
 
 #include <Wire.h>
 #include <LiquidCrystal_I2C.h>
 
-// ---------- USER SETTINGS ----------
-#define LCD_ADDR        0x27   // try 0x3F if the screen stays blank
+#define LCD_ADDR        0x27 
 #define LCD_COLS        20
 #define LCD_ROWS        4
 
-const char* PROJECT_NAME = "YOUR PROJECT NAME";  // <-- change this
+const char* PROJECT_NAME = "YOUR PROJECT NAME"; 
 
-const int MOTOR_SPEED    = 200;   // 0-255
-const int STEP_DELAY_MS  = 2000;  // how long each step runs
-const int SLIDE_DELAY_MS = 120;   // speed of the name slide animation
-// ------------------------------------
+const int MOTOR_SPEED    = 200; 
+const int STEP_DELAY_MS  = 2000; 
+const int SLIDE_DELAY_MS = 120;  
 
-// Motor driver pins
 const int ENA = 9, IN1 = 8, IN2 = 7;
 const int ENB = 10, IN3 = 6, IN4 = 5;
 
@@ -79,15 +24,13 @@ struct Step {
   Direction m2;
 };
 
-// Steps 1-4 from the wiring/sequence diagram
 Step steps[4] = {
-  { CW,  CW  },  // Step 1
-  { CCW, CCW },  // Step 2
-  { CCW, CW  },  // Step 3
-  { CW,  CCW }   // Step 4
+  { CW,  CW  }, 
+  { CCW, CCW }, 
+  { CCW, CW  },  
+  { CW,  CCW }   
 };
 
-// Play order: 1, 2, 3, 4, 3, 2, 1  (as indices into steps[])
 int sequenceOrder[] = { 0, 1, 2, 3, 2, 1, 0 };
 const int SEQUENCE_LEN = 7;
 
@@ -109,15 +52,13 @@ void setup() {
 }
 
 void loop() {
-  // Everything runs once in setup(). Nothing repeats here.
 }
 
-// ---------- BOOT SEQUENCE ----------
 void bootSequence() {
   slideTextRight(PROJECT_NAME, 1);
   clearRow(1);
 
-  blinkScreen(3000, 500);  // blink for 3 seconds
+  blinkScreen(3000, 500);  
 
   lcd.setCursor(0, 1);
   lcd.print("READY");
@@ -155,7 +96,6 @@ void blinkScreen(int totalMs, int intervalMs) {
   }
 }
 
-// ---------- MOTOR SEQUENCE ----------
 void runMotorSequence() {
   for (int i = 0; i < SEQUENCE_LEN; i++) {
     Step s = steps[sequenceOrder[i]];
@@ -204,11 +144,8 @@ void motorsStop() {
   digitalWrite(IN4, LOW);
 }
 
-// ---------- FINISH ----------
 void showFinish() {
   lcd.clear();
   lcd.setCursor(6, 1);
   lcd.print("FINISH");
-  // Motors are already stopped here. Add a buzzer beep, an auto-restart,
-  // or anything else you want to happen at the end — this is the spot for it.
 }
