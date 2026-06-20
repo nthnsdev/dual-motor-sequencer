@@ -5,10 +5,10 @@
 #define LCD_COLS        20
 #define LCD_ROWS        4
 
-const char* PROJECT_NAME = "YOUR PROJECT NAME";
+const char* PROJECT_NAME = "YOURNAME";
 
 const int MOTOR_SPEED    = 200;  
-const int STEP_DELAY_MS  = 2000;
+const int STEP_DELAY_MS  = 5000;
 const int SLIDE_DELAY_MS = 120; 
 
 #define SDA_PIN 21
