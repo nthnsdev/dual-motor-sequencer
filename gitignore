@@ -1,0 +1,20 @@
+# Arduino IDE
+*.hex
+*.bin
+*.elf
+*.eep
+*.map
+build/
+
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# Editor
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
